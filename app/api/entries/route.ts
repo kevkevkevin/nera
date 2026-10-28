@@ -1,19 +1,18 @@
-import { desc } from "drizzle-orm";
-import { getDb } from "@/db";
-import { challengeEntries } from "@/db/schema";
 import { requestHasAdminSession } from "@/lib/admin-auth";
+import { createEntry, listEntries, type GenderValue } from "@/lib/entries-store";
 
 const validGenders = new Set(["female", "male", "other"]);
 
 function errorMessage(error: unknown) {
   const message = error instanceof Error ? error.message : "Unexpected error";
-  return message.includes("no such table") ? "The challenge board is being prepared. Please try again shortly." : message;
+  if (message.includes("UPSTASH_REDIS_REST")) return "Score storage is not configured yet.";
+  return "The challenge board is temporarily unavailable. Please try again.";
 }
 
 export async function GET(request: Request) {
   if (!(await requestHasAdminSession(request))) return Response.json({ error: "Admin access required." }, { status: 401, headers: { "Cache-Control": "no-store" } });
   try {
-    const entries = await getDb().select().from(challengeEntries).orderBy(desc(challengeEntries.score), desc(challengeEntries.id)).limit(5000);
+    const entries = await listEntries();
     return Response.json({ entries }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     return Response.json({ error: errorMessage(error) }, { status: 500 });
@@ -30,11 +29,9 @@ export async function POST(request: Request) {
     if (!validGenders.has(gender)) return Response.json({ error: "Please select a gender." }, { status: 400 });
     if (!Number.isInteger(score) || score < 0 || score > 999999) return Response.json({ error: "Score must be a whole number between 0 and 999,999." }, { status: 400 });
 
-    const [entry] = await getDb().insert(challengeEntries).values({ name, gender: gender as GenderValue, score }).returning();
+    const entry = await createEntry({ name, gender: gender as GenderValue, score });
     return Response.json({ entry }, { status: 201 });
   } catch (error) {
     return Response.json({ error: errorMessage(error) }, { status: 500 });
   }
 }
-
-type GenderValue = "female" | "male" | "other";

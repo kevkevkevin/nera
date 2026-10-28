@@ -1,11 +1,9 @@
 import "server-only";
 
-import { env } from "cloudflare:workers";
-
 export const ADMIN_COOKIE_NAME = "nera_admin_session";
 
 function requiredEnv(name: "ADMIN_CODE" | "ADMIN_SESSION_SECRET") {
-  const value = env[name];
+  const value = process.env[name];
   if (!value) throw new Error(`${name} is not configured.`);
   return value;
 }
