@@ -1,5 +1,5 @@
 import { requestHasAdminSession } from "@/lib/admin-auth";
-import { createEntry, listEntries, type GenderValue } from "@/lib/entries-store";
+import { createEntry, deleteEntry, listEntries, type GenderValue } from "@/lib/entries-store";
 
 const validGenders = new Set(["female", "male", "other"]);
 
@@ -31,6 +31,21 @@ export async function POST(request: Request) {
 
     const entry = await createEntry({ name, gender: gender as GenderValue, score });
     return Response.json({ entry }, { status: 201 });
+  } catch (error) {
+    return Response.json({ error: errorMessage(error) }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: Request) {
+  if (!(await requestHasAdminSession(request))) return Response.json({ error: "Admin access required." }, { status: 401, headers: { "Cache-Control": "no-store" } });
+
+  try {
+    const id = Number(new URL(request.url).searchParams.get("id"));
+    if (!Number.isInteger(id) || id < 1) return Response.json({ error: "A valid entry ID is required." }, { status: 400 });
+
+    const removed = await deleteEntry(id);
+    if (!removed) return Response.json({ error: "Entry not found." }, { status: 404 });
+    return Response.json({ ok: true }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     return Response.json({ error: errorMessage(error) }, { status: 500 });
   }

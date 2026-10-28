@@ -141,6 +141,9 @@ button { cursor: pointer; }
 .gender-badge.male { background: #e9eef5; color: #526f98; }
 .gender-badge.other { background: #eeeeeb; color: #6d6e68; }
 .table-score { color: var(--navy); font-size: 15px; }
+.delete-entry-button { padding: 7px 10px; border: 1px solid #e2c9cc; border-radius: 8px; background: #fff8f8; color: #a64550; font-size: 11px; font-weight: 700; }
+.delete-entry-button:hover { border-color: #be5b65; background: #fff1f2; }
+.delete-entry-button:disabled { cursor: wait; opacity: .55; }
 .empty-board { display: grid; place-items: center; padding: 55px 24px; text-align: center; }
 .empty-board > span { color: var(--green); font-size: 40px; }
 .empty-board h3 { margin: 10px 0 4px; }

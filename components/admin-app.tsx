@@ -27,6 +27,7 @@ export function AdminApp() {
   const [gender, setGender] = useState<Gender | "all">("all");
   const [sort, setSort] = useState<"highest" | "newest">("highest");
   const [refreshing, setRefreshing] = useState(false);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   const loadEntries = useCallback(async (showRefresh = false) => {
     if (showRefresh) setRefreshing(true);
@@ -91,6 +92,21 @@ export function AdminApp() {
     await fetch("/api/admin/logout", { method: "POST" });
     setEntries([]);
     setView("locked");
+  }
+
+  async function handleDelete(entry: Entry) {
+    if (!window.confirm(`Remove ${entry.name}'s score from the challenge board?`)) return;
+    setDeletingId(entry.id);
+    try {
+      const response = await fetch(`/api/entries?id=${entry.id}`, { method: "DELETE" });
+      const payload = (await response.json()) as { error?: string };
+      if (!response.ok) throw new Error(payload.error || "Could not remove this entry.");
+      setEntries((current) => current.filter((item) => item.id !== entry.id));
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : "Could not remove this entry.");
+    } finally {
+      setDeletingId(null);
+    }
   }
 
   const filteredEntries = useMemo(() => {
@@ -176,7 +192,7 @@ export function AdminApp() {
           <div className="table-summary"><strong>{filteredEntries.length}</strong> {filteredEntries.length === 1 ? "entry" : "entries"}</div>
           <div className="entries-table-wrap">
             <table className="entries-table">
-              <thead><tr><th>Rank</th><th>Participant</th><th>Gender</th><th>Score</th><th>Submitted</th></tr></thead>
+              <thead><tr><th>Rank</th><th>Participant</th><th>Gender</th><th>Score</th><th>Submitted</th><th>Action</th></tr></thead>
               <tbody>
                 {filteredEntries.map((entry, index) => (
                   <tr key={entry.id}>
@@ -185,6 +201,7 @@ export function AdminApp() {
                     <td><span className={`gender-badge ${entry.gender}`}>{genderLabel[entry.gender]}</span></td>
                     <td><strong className="table-score">{entry.score.toLocaleString()}</strong></td>
                     <td>{formatSubmittedAt(entry.createdAt)}</td>
+                    <td><button className="delete-entry-button" type="button" onClick={() => void handleDelete(entry)} disabled={deletingId === entry.id}>{deletingId === entry.id ? "Removing…" : "Remove"}</button></td>
                   </tr>
                 ))}
               </tbody>

@@ -43,6 +43,17 @@ export async function createEntry(input: Omit<ChallengeEntry, "id" | "createdAt"
   return entry;
 }
 
+export async function deleteEntry(id: number) {
+  const values = await getRedis().lrange<ChallengeEntry | string>(ENTRIES_KEY, 0, -1);
+  const entry = values
+    .map((value) => (typeof value === "string" ? JSON.parse(value) as ChallengeEntry : value))
+    .find((value) => isChallengeEntry(value) && value.id === id);
+
+  if (!entry) return false;
+  await getRedis().lrem(ENTRIES_KEY, 1, entry);
+  return true;
+}
+
 function isChallengeEntry(value: unknown): value is ChallengeEntry {
   if (!value || typeof value !== "object") return false;
   const entry = value as Partial<ChallengeEntry>;
