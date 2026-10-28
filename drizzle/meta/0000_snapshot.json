@@ -1,0 +1,86 @@
+{
+  "version": "6",
+  "dialect": "sqlite",
+  "id": "c754a5aa-cb77-4f94-b8d6-d02a3d569679",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "tables": {
+    "challenge_entries": {
+      "name": "challenge_entries",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "gender": {
+          "name": "gender",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "score": {
+          "name": "score",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {
+        "challenge_entries_score_idx": {
+          "name": "challenge_entries_score_idx",
+          "columns": [
+            "score"
+          ],
+          "isUnique": false
+        },
+        "challenge_entries_name_idx": {
+          "name": "challenge_entries_name_idx",
+          "columns": [
+            "name"
+          ],
+          "isUnique": false
+        },
+        "challenge_entries_gender_idx": {
+          "name": "challenge_entries_gender_idx",
+          "columns": [
+            "gender"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    }
+  },
+  "views": {},
+  "enums": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  },
+  "internal": {
+    "indexes": {}
+  }
+}

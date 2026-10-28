@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1793197632633,
+      "tag": "0000_lively_sharon_carter",
+      "breakpoints": true
+    }
+  ]
+}
