@@ -24,7 +24,7 @@ export function EntryForm() {
     event.preventDefault();
     setError("");
     const numericScore = Number(score);
-    if (!name.trim() || !gender || !Number.isInteger(numericScore)) {
+    if (!name.trim() || !gender || !score.trim() || !Number.isFinite(numericScore) || numericScore < 0 || numericScore > 999999) {
       setError("Please complete all three fields.");
       return;
     }
@@ -90,7 +90,7 @@ export function EntryForm() {
       <div className="field-group">
         <label htmlFor="participant-score">Score</label>
         <div className="score-input-wrap">
-          <input id="participant-score" name="score" type="number" inputMode="numeric" min={0} max={999999} step={1} placeholder="000" value={score} onChange={(event) => setScore(event.target.value)} required />
+          <input id="participant-score" name="score" type="number" inputMode="decimal" min={0} max={999999} step="any" placeholder="000.00" value={score} onChange={(event) => setScore(event.target.value)} required />
           <span>PTS</span>
         </div>
       </div>

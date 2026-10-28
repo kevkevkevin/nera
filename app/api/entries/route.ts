@@ -27,7 +27,7 @@ export async function POST(request: Request) {
     const score = Number(payload.score);
     if (name.length < 2 || name.length > 80) return Response.json({ error: "Please enter a name between 2 and 80 characters." }, { status: 400 });
     if (!validGenders.has(gender)) return Response.json({ error: "Please select a gender." }, { status: 400 });
-    if (!Number.isInteger(score) || score < 0 || score > 999999) return Response.json({ error: "Score must be a whole number between 0 and 999,999." }, { status: 400 });
+    if (!Number.isFinite(score) || score < 0 || score > 999999) return Response.json({ error: "Score must be a number between 0 and 999,999." }, { status: 400 });
 
     const entry = await createEntry({ name, gender: gender as GenderValue, score });
     return Response.json({ entry }, { status: 201 });
