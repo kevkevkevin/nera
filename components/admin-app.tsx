@@ -120,7 +120,7 @@ export function AdminApp() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `nera-whoop-entries-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.download = `nera-whoop-entries-${localDateStamp(new Date())}.csv`;
     document.body.appendChild(link);
     link.click();
     link.remove();
@@ -244,4 +244,9 @@ function formatSubmittedAt(value: string) {
 
 function csvCell(value: string | number) {
   return `"${String(value).replace(/"/g, '""')}"`;
+}
+
+function localDateStamp(date: Date) {
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
