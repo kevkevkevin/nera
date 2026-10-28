@@ -109,6 +109,24 @@ export function AdminApp() {
     }
   }
 
+  function handleExportCsv() {
+    const header = ["Name", "Gender", "Score", "Submitted At"];
+    const rows = entries
+      .slice()
+      .sort((left, right) => right.score - left.score || right.id - left.id)
+      .map((entry) => [entry.name, genderLabel[entry.gender], entry.score, entry.createdAt]);
+    const csv = [header, ...rows].map((row) => row.map(csvCell).join(",")).join("\r\n");
+    const blob = new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `nera-whoop-entries-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  }
+
   const filteredEntries = useMemo(() => {
     const query = search.trim().toLocaleLowerCase();
     return entries
@@ -166,7 +184,10 @@ export function AdminApp() {
       <div className="dashboard-shell">
         <section className="dashboard-title-row">
           <div><span className="eyebrow">Live event overview</span><h1>Challenge board</h1><p>Every participant and score, updated on demand.</p></div>
-          <button className="refresh-button" type="button" onClick={() => void loadEntries(true)} disabled={refreshing}><span className={refreshing ? "spinning" : ""}>↻</span>{refreshing ? "Refreshing…" : "Refresh entries"}</button>
+          <div className="dashboard-title-actions">
+            <button className="export-button" type="button" onClick={handleExportCsv} disabled={!entries.length}><span aria-hidden="true">↓</span>Export CSV</button>
+            <button className="refresh-button" type="button" onClick={() => void loadEntries(true)} disabled={refreshing}><span className={refreshing ? "spinning" : ""}>↻</span>{refreshing ? "Refreshing…" : "Refresh entries"}</button>
+          </div>
         </section>
 
         <section className="stats-grid" aria-label="Challenge statistics">
@@ -219,4 +240,8 @@ function formatSubmittedAt(value: string) {
   const date = new Date(normalized);
   if (Number.isNaN(date.getTime())) return "—";
   return submittedAtFormatter.format(date);
+}
+
+function csvCell(value: string | number) {
+  return `"${String(value).replace(/"/g, '""')}"`;
 }
