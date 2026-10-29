@@ -11,11 +11,14 @@ const genderOptions: { value: Gender; label: string }[] = [
 ];
 
 type SubmittedEntry = { name: string; score: number };
+type ScoreInputs = [string, string, string, string];
+
+const emptyScores: ScoreInputs = ["", "", "", ""];
 
 export function EntryForm() {
   const [name, setName] = useState("");
   const [gender, setGender] = useState<Gender | "">("");
-  const [score, setScore] = useState("");
+  const [scores, setScores] = useState<ScoreInputs>(emptyScores);
   const [status, setStatus] = useState<"idle" | "submitting" | "success">("idle");
   const [error, setError] = useState("");
   const [submitted, setSubmitted] = useState<SubmittedEntry | null>(null);
@@ -23,9 +26,9 @@ export function EntryForm() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
-    const numericScore = Number(score);
-    if (!name.trim() || !gender || !score.trim() || !Number.isFinite(numericScore) || numericScore < 0 || numericScore > 999999) {
-      setError("Please complete all three fields.");
+    const numericScores = scores.map(Number);
+    if (!name.trim() || !gender || scores.some((score) => !score.trim()) || numericScores.some((score) => !Number.isFinite(score) || score < 0 || score > 999999)) {
+      setError("Please complete all fields with four valid scores.");
       return;
     }
 
@@ -34,7 +37,7 @@ export function EntryForm() {
       const response = await fetch("/api/entries", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, gender, score: numericScore }),
+        body: JSON.stringify({ name, gender, scores: numericScores }),
       });
       const payload = (await response.json()) as { entry?: SubmittedEntry; error?: string };
       if (!response.ok || !payload.entry) throw new Error(payload.error || "We couldn’t save that score.");
@@ -49,7 +52,7 @@ export function EntryForm() {
   function resetForm() {
     setName("");
     setGender("");
-    setScore("");
+    setScores(["", "", "", ""]);
     setSubmitted(null);
     setError("");
     setStatus("idle");
@@ -61,9 +64,9 @@ export function EntryForm() {
         <div className="success-burst" aria-hidden="true"><span>✓</span></div>
         <span className="eyebrow">Score locked in</span>
         <h2>Nice work, {submitted.name}!</h2>
-        <p>Your challenge score is now on the board.</p>
+        <p>Your four-day average is now on the board.</p>
         <div className="score-ticket">
-          <span>Your score</span><strong>{submitted.score.toLocaleString()}</strong><small>PTS</small>
+          <span>Average score</span><strong>{submitted.score.toLocaleString()}</strong><small>PTS</small>
         </div>
         <button className="secondary-button" type="button" onClick={resetForm}>Add another participant</button>
       </section>
@@ -87,13 +90,32 @@ export function EntryForm() {
           ))}
         </div>
       </fieldset>
-      <div className="field-group">
-        <label htmlFor="participant-score">Score</label>
-        <div className="score-input-wrap">
-          <input id="participant-score" name="score" type="number" inputMode="decimal" min={0} max={999999} step="any" placeholder="000.00" value={score} onChange={(event) => setScore(event.target.value)} required />
-          <span>PTS</span>
+      <fieldset className="field-group score-field">
+        <legend>Daily scores</legend>
+        <div className="score-grid">
+          {scores.map((score, index) => (
+            <label className="day-score-field" key={index} htmlFor={`participant-score-${index + 1}`}>
+              <span>Day {index + 1}</span>
+              <div className="score-input-wrap">
+                <input
+                  id={`participant-score-${index + 1}`}
+                  name={`score-${index + 1}`}
+                  type="number"
+                  inputMode="decimal"
+                  min={0}
+                  max={999999}
+                  step="any"
+                  placeholder="000.00"
+                  value={score}
+                  onChange={(event) => setScores((current) => current.map((value, scoreIndex) => scoreIndex === index ? event.target.value : value) as ScoreInputs)}
+                  required
+                />
+                <span>PTS</span>
+              </div>
+            </label>
+          ))}
         </div>
-      </div>
+      </fieldset>
       {error ? <p className="form-error" role="alert">{error}</p> : null}
       <button className="submit-button" type="submit" disabled={status === "submitting"}>
         <span>{status === "submitting" ? "Saving score…" : "Submit my score"}</span><span aria-hidden="true">→</span>

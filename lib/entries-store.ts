@@ -3,11 +3,13 @@ import "server-only";
 import { Redis } from "@upstash/redis";
 
 export type GenderValue = "female" | "male" | "other";
+export type ScoreSet = [number, number, number, number];
 
 export type ChallengeEntry = {
   id: number;
   name: string;
   gender: GenderValue;
+  scores?: ScoreSet;
   score: number;
   createdAt: string;
 };
@@ -60,6 +62,9 @@ function isChallengeEntry(value: unknown): value is ChallengeEntry {
   return typeof entry.id === "number"
     && typeof entry.name === "string"
     && (entry.gender === "female" || entry.gender === "male" || entry.gender === "other")
+    && (entry.scores === undefined || (Array.isArray(entry.scores)
+      && entry.scores.length === 4
+      && entry.scores.every((score) => typeof score === "number" && Number.isFinite(score))))
     && typeof entry.score === "number"
     && typeof entry.createdAt === "string";
 }

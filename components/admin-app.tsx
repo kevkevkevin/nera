@@ -4,7 +4,8 @@ import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 
 type Gender = "female" | "male" | "other";
-type Entry = { id: number; name: string; gender: Gender; score: number; createdAt: string };
+type ScoreSet = [number, number, number, number];
+type Entry = { id: number; name: string; gender: Gender; scores?: ScoreSet; score: number; createdAt: string };
 type ViewState = "loading" | "locked" | "ready";
 
 const genderLabel: Record<Gender, string> = { female: "Female", male: "Male", other: "Other" };
@@ -110,11 +111,11 @@ export function AdminApp() {
   }
 
   function handleExportCsv() {
-    const header = ["Name", "Gender", "Score", "Submitted At"];
+    const header = ["Name", "Gender", "Day 1", "Day 2", "Day 3", "Day 4", "Average", "Submitted At"];
     const rows = entries
       .slice()
       .sort((left, right) => right.score - left.score || right.id - left.id)
-      .map((entry) => [entry.name, genderLabel[entry.gender], entry.score, entry.createdAt]);
+      .map((entry) => [entry.name, genderLabel[entry.gender], ...dailyScores(entry).map((score) => score ?? ""), entry.score, entry.createdAt]);
     const csv = [header, ...rows].map((row) => row.map(csvCell).join(",")).join("\r\n");
     const blob = new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -135,7 +136,7 @@ export function AdminApp() {
       .sort((left, right) => sort === "highest" ? right.score - left.score || right.id - left.id : right.id - left.id);
   }, [entries, gender, search, sort]);
 
-  const topScore = entries.reduce((highest, entry) => Math.max(highest, entry.score), 0);
+  const topAverage = entries.reduce((highest, entry) => Math.max(highest, entry.score), 0);
   const femaleCount = entries.filter((entry) => entry.gender === "female").length;
   const maleCount = entries.filter((entry) => entry.gender === "male").length;
 
@@ -192,7 +193,7 @@ export function AdminApp() {
 
         <section className="stats-grid" aria-label="Challenge statistics">
           <article className="stat-card featured"><span>Total participants</span><strong>{entries.length}</strong><small>Let&apos;s keep moving</small></article>
-          <article className="stat-card"><span>Top score</span><strong>{topScore.toLocaleString()}</strong><small>Current event best</small></article>
+          <article className="stat-card"><span>Top average</span><strong>{topAverage.toLocaleString()}</strong><small>Best four-day average</small></article>
           <article className="stat-card"><span>Female</span><strong>{femaleCount}</strong><small>{entries.length ? Math.round((femaleCount / entries.length) * 100) : 0}% of entries</small></article>
           <article className="stat-card"><span>Male</span><strong>{maleCount}</strong><small>{entries.length ? Math.round((maleCount / entries.length) * 100) : 0}% of entries</small></article>
         </section>
@@ -205,7 +206,7 @@ export function AdminApp() {
                 <option value="all">All genders</option><option value="female">Female</option><option value="male">Male</option><option value="other">Other</option>
               </select>
               <select aria-label="Sort entries" value={sort} onChange={(event) => setSort(event.target.value as "highest" | "newest")}>
-                <option value="highest">Highest score first</option><option value="newest">Newest first</option>
+                <option value="highest">Highest average first</option><option value="newest">Newest first</option>
               </select>
             </div>
           </div>
@@ -213,18 +214,20 @@ export function AdminApp() {
           <div className="table-summary"><strong>{filteredEntries.length}</strong> {filteredEntries.length === 1 ? "entry" : "entries"}</div>
           <div className="entries-table-wrap">
             <table className="entries-table">
-              <thead><tr><th>Rank</th><th>Participant</th><th>Gender</th><th>Score</th><th>Submitted</th><th>Action</th></tr></thead>
+              <thead><tr><th>Rank</th><th>Participant</th><th>Gender</th><th>Day 1</th><th>Day 2</th><th>Day 3</th><th>Day 4</th><th>Average</th><th>Submitted</th><th>Action</th></tr></thead>
               <tbody>
-                {filteredEntries.map((entry, index) => (
-                  <tr key={entry.id}>
+                {filteredEntries.map((entry, index) => {
+                  const scores = dailyScores(entry);
+                  return <tr key={entry.id}>
                     <td><span className={`rank rank-${index + 1}`}>{index + 1}</span></td>
                     <td><div className="participant-cell"><span>{entry.name.slice(0, 1).toUpperCase()}</span><strong>{entry.name}</strong></div></td>
                     <td><span className={`gender-badge ${entry.gender}`}>{genderLabel[entry.gender]}</span></td>
+                    {scores.map((score, scoreIndex) => <td key={scoreIndex}>{score === null ? "—" : score.toLocaleString()}</td>)}
                     <td><strong className="table-score">{entry.score.toLocaleString()}</strong></td>
                     <td>{formatSubmittedAt(entry.createdAt)}</td>
                     <td><button className="delete-entry-button" type="button" onClick={() => void handleDelete(entry)} disabled={deletingId === entry.id}>{deletingId === entry.id ? "Removing…" : "Remove"}</button></td>
-                  </tr>
-                ))}
+                  </tr>;
+                })}
               </tbody>
             </table>
             {!filteredEntries.length ? <div className="empty-board"><span>◎</span><h3>No entries found</h3><p>Try changing the filters or submit the first score.</p></div> : null}
@@ -249,4 +252,8 @@ function csvCell(value: string | number) {
 function localDateStamp(date: Date) {
   const pad = (value: number) => String(value).padStart(2, "0");
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+function dailyScores(entry: Entry): [number | null, number | null, number | null, number | null] {
+  return entry.scores?.length === 4 ? entry.scores : [entry.score, null, null, null];
 }

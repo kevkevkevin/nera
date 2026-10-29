@@ -1,5 +1,5 @@
 import { requestHasAdminSession } from "@/lib/admin-auth";
-import { createEntry, deleteEntry, listEntries, type GenderValue } from "@/lib/entries-store";
+import { createEntry, deleteEntry, listEntries, type GenderValue, type ScoreSet } from "@/lib/entries-store";
 
 const validGenders = new Set(["female", "male", "other"]);
 
@@ -21,15 +21,20 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const payload = (await request.json()) as { name?: string; gender?: string; score?: number };
+    const payload = (await request.json()) as { name?: string; gender?: string; scores?: unknown };
     const name = payload.name?.trim().replace(/\s+/g, " ") || "";
     const gender = payload.gender || "";
-    const score = Number(payload.score);
+    const scores = Array.isArray(payload.scores) ? payload.scores.map(Number) : [];
     if (name.length < 2 || name.length > 80) return Response.json({ error: "Please enter a name between 2 and 80 characters." }, { status: 400 });
     if (!validGenders.has(gender)) return Response.json({ error: "Please select a gender." }, { status: 400 });
-    if (!Number.isFinite(score) || score < 0 || score > 999999) return Response.json({ error: "Score must be a number between 0 and 999,999." }, { status: 400 });
+    if (scores.length !== 4 || scores.some((score) => !Number.isFinite(score) || score < 0 || score > 999999)) {
+      return Response.json({ error: "Please enter four valid scores between 0 and 999,999." }, { status: 400 });
+    }
 
-    const entry = await createEntry({ name, gender: gender as GenderValue, score });
+    const scoreSet = scores as ScoreSet;
+    const average = Math.round(((scoreSet.reduce((total, score) => total + score, 0) / scoreSet.length) + Number.EPSILON) * 100) / 100;
+
+    const entry = await createEntry({ name, gender: gender as GenderValue, scores: scoreSet, score: average });
     return Response.json({ entry }, { status: 201 });
   } catch (error) {
     return Response.json({ error: errorMessage(error) }, { status: 500 });

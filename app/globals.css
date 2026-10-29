@@ -45,7 +45,10 @@ button { cursor: pointer; }
 .choice-chip.selected { border-color: var(--green); background: var(--green); color: white; box-shadow: 0 8px 24px rgb(139 172 34 / 22%); }
 .choice-chip input { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; opacity: 0; pointer-events: none; }
 .score-input-wrap { position: relative; }
-.score-input-wrap input { padding-right: 70px; font-size: 21px; font-weight: 800; }
+.score-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.day-score-field { display: grid; gap: 7px; }
+.day-score-field > span { color: #77786f; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .09em; }
+.score-input-wrap input { padding-right: 60px; font-size: 18px; font-weight: 800; }
 .score-input-wrap > span { position: absolute; top: 50%; right: 18px; transform: translateY(-50%); color: var(--green); font-size: 11px; font-weight: 900; letter-spacing: .12em; pointer-events: none; }
 .form-error { margin: -8px 0 0; color: #ba3e49; font-size: 13px; font-weight: 700; }
 .submit-button, .secondary-button { min-height: 58px; border: 0; border-radius: 14px; font-weight: 800; transition: transform .2s, box-shadow .2s, opacity .2s; }
